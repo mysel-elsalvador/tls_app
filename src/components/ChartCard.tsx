@@ -1,22 +1,22 @@
 "use client";
 
 import { type KeyboardEvent, type PointerEvent, type RefObject, useEffect, useMemo, useRef, useState } from "react";
-import { pointTime, tickLabel, withUnit } from "@/lib/format";
+import { fill, pointTime, tickLabel, withUnit } from "@/lib/format";
 import type { Tank, TankHistory } from "@/lib/types";
 
 // Plot geometry, in px. Width follows the card; height is fixed.
 const HEIGHT = 200;
-const M = { top: 10, right: 14, bottom: 24, left: 44 };
+const M = { top: 10, right: 14, bottom: 24, left: 52 };
 // Readings closer than this never break the line, whatever the interval.
 const MIN_GAP_MS = 15 * 60_000;
 
 interface Point {
   at: number;
-  height: number;
-  volume: number | null;
+  volume: number;
+  height: number | null;
 }
 
-/** Product height of one tank over the window [from, to] (agent time). */
+/** Product volume of one tank over the window [from, to] (agent time). */
 export function ChartCard({
   t,
   h,
@@ -33,36 +33,38 @@ export function ChartCard({
   const width = useWidth(wrap);
   const [hover, setHover] = useState<number | null>(null);
 
-  // Readings without a height are left out; the gap they leave breaks the line.
+  // Readings without a volume are left out; the gap they leave breaks the line.
   const points = useMemo<Point[]>(
     () =>
       (h?.points ?? []).flatMap(([at, height, volume]) =>
-        height === null ? [] : [{ at: Date.parse(at), height, volume }],
+        volume === null ? [] : [{ at: Date.parse(at), volume, height }],
       ),
     [h],
   );
+  // Top of the tank from the latest reading (volume + ullage); null if unknown.
+  const capacity = fill(t)?.capacity ?? null;
 
   const x0 = Date.parse(from);
   const x1 = Date.parse(to);
   const plotW = Math.max(1, width - M.left - M.right);
   const plotH = HEIGHT - M.top - M.bottom;
-  const yTicks = niceTicks(Math.max(0, ...points.map((p) => p.height)));
+  const yTicks = niceTicks(Math.max(0, capacity ?? 0, ...points.map((p) => p.volume)));
   const yMax = yTicks[yTicks.length - 1]!;
   const x = (ms: number) => M.left + ((ms - x0) / (x1 - x0)) * plotW;
   const y = (v: number) => M.top + plotH - (v / yMax) * plotH;
 
   const segments = splitAtGaps(points);
   const base = y(0);
-  const line = segments.map((s) => s.map((p, i) => `${i ? "L" : "M"}${x(p.at)},${y(p.height)}`).join("")).join("");
+  const line = segments.map((s) => s.map((p, i) => `${i ? "L" : "M"}${x(p.at)},${y(p.volume)}`).join("")).join("");
   const area = segments
     .filter((s) => s.length > 1)
-    .map((s) => `M${x(s[0]!.at)},${base}` + s.map((p) => `L${x(p.at)},${y(p.height)}`).join("") + `L${x(s[s.length - 1]!.at)},${base}Z`)
+    .map((s) => `M${x(s[0]!.at)},${base}` + s.map((p) => `L${x(p.at)},${y(p.volume)}`).join("") + `L${x(s[s.length - 1]!.at)},${base}Z`)
     .join("");
 
   const last = points[points.length - 1];
   const hp = hover === null ? undefined : points[hover];
-  const min = points.length ? Math.min(...points.map((p) => p.height)) : null;
-  const max = points.length ? Math.max(...points.map((p) => p.height)) : null;
+  const min = points.length ? Math.min(...points.map((p) => p.volume)) : null;
+  const max = points.length ? Math.max(...points.map((p) => p.volume)) : null;
 
   const onPointer = (e: PointerEvent<SVGSVGElement>) => {
     if (!points.length) return;
@@ -94,19 +96,19 @@ export function ChartCard({
         </span>
       </header>
       <p className="tank-volume">
-        {withUnit(t.height, u.height, 1)} <span className="muted small">altura actual</span>
+        {withUnit(t.volume, u.volume)} <span className="muted small">volumen actual</span>
       </p>
 
       <div className="chart" ref={wrap}>
         {points.length === 0 ? (
-          <p className="muted small chart-empty">Sin lecturas de altura en este período.</p>
+          <p className="muted small chart-empty">Sin lecturas de volumen en este período.</p>
         ) : (
           <svg
             width={width}
             height={HEIGHT}
             role="img"
             tabIndex={0}
-            aria-label={`Altura del producto, tanque ${t.tank}: de ${withUnit(points[0]!.height, u.height, 1)} a ${withUnit(last!.height, u.height, 1)}. Use las flechas para recorrer las lecturas.`}
+            aria-label={`Volumen del producto, tanque ${t.tank}: de ${withUnit(points[0]!.volume, u.volume)} a ${withUnit(last!.volume, u.volume)}${capacity !== null ? `, capacidad ${withUnit(capacity, u.volume)}` : ""}. Use las flechas para recorrer las lecturas.`}
             onPointerMove={onPointer}
             onPointerLeave={() => setHover(null)}
             onKeyDown={onKey}
@@ -126,21 +128,29 @@ export function ChartCard({
                 {tickLabel(ms)}
               </text>
             ))}
+            {capacity !== null && (
+              <g>
+                <line className="chart-capacity" x1={M.left} x2={M.left + plotW} y1={y(capacity)} y2={y(capacity)} />
+                <text className="chart-tick" x={M.left + plotW} y={y(capacity) - 4} textAnchor="end">
+                  Capacidad {withUnit(capacity, u.volume)}
+                </text>
+              </g>
+            )}
             <path className="chart-area" d={area} />
             <path className="chart-line" d={line} />
             {/* Readings with no neighbour on either side would be invisible as a line. */}
             {segments
               .filter((s) => s.length === 1)
               .map((s) => (
-                <circle key={s[0]!.at} className="chart-lone" cx={x(s[0]!.at)} cy={y(s[0]!.height)} r={2} />
+                <circle key={s[0]!.at} className="chart-lone" cx={x(s[0]!.at)} cy={y(s[0]!.volume)} r={2} />
               ))}
             {hp ? (
               <>
                 <line className="chart-cross" x1={x(hp.at)} x2={x(hp.at)} y1={M.top} y2={base} />
-                <circle className="chart-dot" cx={x(hp.at)} cy={y(hp.height)} r={4} />
+                <circle className="chart-dot" cx={x(hp.at)} cy={y(hp.volume)} r={4} />
               </>
             ) : (
-              <circle className="chart-dot" cx={x(last!.at)} cy={y(last!.height)} r={4} />
+              <circle className="chart-dot" cx={x(last!.at)} cy={y(last!.volume)} r={4} />
             )}
           </svg>
         )}
@@ -150,8 +160,8 @@ export function ChartCard({
             style={x(hp.at) > width / 2 ? { right: width - x(hp.at) + 8 } : { left: x(hp.at) + 8 }}
             aria-live="polite"
           >
-            <strong>{withUnit(hp.height, u.height, 1)}</strong>
-            <span>{withUnit(hp.volume, u.volume)}</span>
+            <strong>{withUnit(hp.volume, u.volume)}</strong>
+            <span>{withUnit(hp.height, u.height, 1)}</span>
             <span className="muted">{pointTime(hp.at)}</span>
           </div>
         )}
@@ -159,8 +169,8 @@ export function ChartCard({
 
       {min !== null && max !== null && (
         <p className="muted small">
-          Altura del producto ({u.height ?? "sin unidad"}) · mín {withUnit(min, u.height, 1)} · máx{" "}
-          {withUnit(max, u.height, 1)} · {points.length.toLocaleString("es-SV")} lecturas
+          Volumen del producto ({u.volume ?? "sin unidad"}) · mín {withUnit(min, u.volume)} · máx{" "}
+          {withUnit(max, u.volume)} · {points.length.toLocaleString("es-SV")} lecturas
         </p>
       )}
     </article>
@@ -209,16 +219,19 @@ function nearest(points: Point[], ms: number): number {
   return lo > 0 && ms - points[lo - 1]!.at < points[lo]!.at - ms ? lo - 1 : lo;
 }
 
-/** 0 up to a round value at or above `max`, in about 4 round steps. */
+/**
+ * 0 up to a round value at or above `max`, in 4-6 round steps
+ * (10,170 -> 0, 2,500 … 12,500).
+ */
 function niceTicks(max: number): number[] {
   if (max <= 0) return [0, 1];
-  const raw = max / 4;
+  const raw = max / 5;
   const pow = 10 ** Math.floor(Math.log10(raw));
   const n = raw / pow;
   const step = (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * pow;
   const ticks: number[] = [];
-  for (let v = 0; v < max + step / 2 && ticks.length < 12; v += step) ticks.push(Number(v.toFixed(6)));
-  if (ticks[ticks.length - 1]! < max) ticks.push(ticks[ticks.length - 1]! + step);
+  for (let v = 0; v < max && ticks.length < 12; v += step) ticks.push(Number(v.toFixed(6)));
+  ticks.push(Number((ticks.length * step).toFixed(6)));
   return ticks;
 }
 

@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import { AlarmTable } from "@/components/AlarmTable";
 import { AuthGate } from "@/components/AuthGate";
 import { ChartCard } from "@/components/ChartCard";
+import { DeliveryList } from "@/components/DeliveryList";
 import { StationStatus } from "@/components/Status";
 import { TankCard } from "@/components/TankCard";
 import { useApi } from "@/lib/api";
@@ -72,7 +73,8 @@ function Station() {
     );
   }
 
-  const { station: s, tanks, alarms } = data;
+  // deliveries: absent from an API deployed before it was added.
+  const { station: s, tanks, alarms, deliveries = [] } = data;
   return (
     <>
       {back}
@@ -128,6 +130,9 @@ function Station() {
           )}
         </>
       )}
+
+      <h2>Entregas recientes</h2>
+      <DeliveryList deliveries={deliveries} />
     </>
   );
 }

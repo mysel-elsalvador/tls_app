@@ -313,6 +313,11 @@ h3 {
   stroke-linejoin: round;
   stroke-linecap: round;
 }
+/* Top of the tank: a reference, so a step darker than the gridlines. */
+.chart-capacity {
+  stroke: var(--muted);
+  stroke-width: 1;
+}
 .chart-area {
   fill: var(--accent);
   fill-opacity: 0.1;
@@ -346,6 +351,66 @@ h3 {
 }
 .chart-tip strong {
   font-size: 1rem;
+}
+
+/* ------------------------------------------------ deliveries */
+.deliveries {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.delivery + .delivery {
+  border-top: 1px solid var(--hairline);
+}
+.delivery summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 1rem;
+  align-items: baseline;
+  padding: 0.65rem 0.9rem;
+  cursor: pointer;
+  list-style: none;
+}
+.delivery summary::-webkit-details-marker {
+  display: none;
+}
+.delivery summary::before {
+  content: "▸";
+  color: var(--muted);
+  margin-right: -0.5rem;
+}
+/* The total sits at the right end, or alone on the next line when narrow. */
+.delivery summary strong {
+  margin-left: auto;
+}
+.delivery td {
+  white-space: nowrap;
+}
+.delivery[open] summary::before {
+  content: "▾";
+}
+.delivery summary:hover {
+  background: var(--page);
+}
+.delivery summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.delivery[open] summary {
+  border-bottom: 1px solid var(--hairline);
+}
+.delivery .table {
+  background: var(--page);
+}
+.table-scroll {
+  overflow-x: auto;
+}
+.right {
+  text-align: right !important;
+}
+.block {
+  display: block;
 }
 
 .facts {
