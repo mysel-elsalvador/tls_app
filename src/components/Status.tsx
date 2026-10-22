@@ -6,7 +6,15 @@ type Tone = "good" | "critical" | "neutral";
 // Status is never color alone: each badge has an icon and a label.
 const ICON: Record<Tone, string> = { good: "●", critical: "▲", neutral: "○" };
 
-export function Badge({ tone, children, title }: { tone: Tone; children: React.ReactNode; title?: string }) {
+export function Badge({
+  tone,
+  children,
+  title,
+}: {
+  tone: Tone;
+  children: React.ReactNode;
+  title?: string;
+}) {
   return (
     <span className={`badge badge-${tone}`} title={title}>
       <span aria-hidden="true">{ICON[tone]}</span> {children}
@@ -32,7 +40,10 @@ export function StationStatus({ s }: { s: StationSummary }) {
   const [ct, cl] = CONSOLE[s.console.state];
   return (
     <div className="badges">
-      <Badge tone={tone} title={`Último latido: ${ago(s.agent.last_heartbeat_at)}`}>
+      <Badge
+        tone={tone}
+        title={`Último latido: ${ago(s.agent.last_heartbeat_at)}`}
+      >
         {label}
       </Badge>
       {s.console.id === null ? (
@@ -40,7 +51,14 @@ export function StationStatus({ s }: { s: StationSummary }) {
           Consola sin asignar
         </Badge>
       ) : (
-        <Badge tone={ct} title={s.console.state === "unknown" ? "El agente no está en línea" : undefined}>
+        <Badge
+          tone={ct}
+          title={
+            s.console.state === "unknown"
+              ? "El agente no está en línea"
+              : undefined
+          }
+        >
           Consola {cl}
         </Badge>
       )}
