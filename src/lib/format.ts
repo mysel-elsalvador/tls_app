@@ -81,10 +81,16 @@ export function alarmLabel(a: Alarm): { text: string; documented: boolean } {
     return { text: TANK_ALARM[a.type]!, documented: true };
   }
   if (a.category === "14" && a.type === "02") return { text: "Fallo de autodial", documented: true };
+  // From the console's alarm documentation (2026-10-22): "Fuel Alarm — fuel
+  // is present in the area being monitored by the sensor".
+  if (a.category === "03" && a.type === "03") return { text: "Combustible detectado por sensor", documented: true };
   return { text: `Categoría ${a.category ?? "?"}, tipo ${a.type ?? "?"}`, documented: false };
 }
 
 export function alarmSubject(a: Alarm): string {
   if (a.number === null) return "—";
-  return a.category === "02" ? `Tanque ${a.number}` : `N.º ${a.number}`;
+  if (a.category === "02") return `Tanque ${a.number}`;
+  // Category 03 is a sensor alarm (see the 03/03 fuel alarm above).
+  if (a.category === "03") return `Sensor ${a.number}`;
+  return `N.º ${a.number}`;
 }
