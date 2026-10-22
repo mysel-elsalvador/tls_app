@@ -1,6 +1,25 @@
 import { ago, consoleTime, fill, withUnit } from "@/lib/format";
 import type { Tank } from "@/lib/types";
 
+/**
+ * Liquid level (0..1 of the diameter) at which a circle is filled to `ratio`
+ * of its area, so the gauge looks like the cross-section of a horizontal
+ * cylindrical tank. Solved by bisection; the area fraction of a segment of
+ * height h is (θ − sin θ) / 2π with θ = 2·acos(1 − 2h).
+ */
+function levelForArea(ratio: number): number {
+  const r = Math.min(1, Math.max(0, ratio));
+  let lo = 0;
+  let hi = 1;
+  for (let i = 0; i < 30; i++) {
+    const h = (lo + hi) / 2;
+    const theta = 2 * Math.acos(1 - 2 * h);
+    if ((theta - Math.sin(theta)) / (2 * Math.PI) < r) lo = h;
+    else hi = h;
+  }
+  return (lo + hi) / 2;
+}
+
 export function TankCard({ t }: { t: Tank }) {
   const u = t.units ?? {};
   const f = fill(t);
@@ -16,7 +35,7 @@ export function TankCard({ t }: { t: Tank }) {
 
       <p className="tank-volume">{withUnit(t.volume, u.volume)}</p>
       {f && pct !== null ? (
-        <>
+        <div className="tank-gauge">
           <div
             className="meter"
             role="meter"
@@ -25,12 +44,15 @@ export function TankCard({ t }: { t: Tank }) {
             aria-valuemax={100}
             aria-valuenow={pct}
           >
-            <div className="meter-fill" style={{ width: `${f.ratio * 100}%` }} />
+            <div className="meter-fill" style={{ height: `${levelForArea(f.ratio) * 100}%` }} />
+            <span className="meter-label" aria-hidden="true">
+              {pct} %
+            </span>
           </div>
           <p className="muted small">
             {pct} % de {withUnit(f.capacity, u.volume)} · vacío {withUnit(t.ullage, u.volume)}
           </p>
-        </>
+        </div>
       ) : (
         <p className="muted small">Capacidad desconocida</p>
       )}

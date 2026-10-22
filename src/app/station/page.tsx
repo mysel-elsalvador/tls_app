@@ -1,15 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { AlarmTable } from "@/components/AlarmTable";
 import { AuthGate } from "@/components/AuthGate";
+import { ChartCard } from "@/components/ChartCard";
 import { StationStatus } from "@/components/Status";
 import { TankCard } from "@/components/TankCard";
 import { useApi } from "@/lib/api";
 import { ago, localTime } from "@/lib/format";
-import type { StationDetail } from "@/lib/types";
+import type { History, StationDetail, Tank } from "@/lib/types";
 
 // /station/?id=7: a query string, because a static export cannot have
 // dynamic routes for stations created after the build.
@@ -24,8 +25,20 @@ export default function StationPage() {
 }
 
 function Station() {
-  const id = useSearchParams().get("id");
+  const params = useSearchParams();
+  const router = useRouter();
+  const id = params.get("id");
   const valid = id !== null && /^[1-9][0-9]*$/.test(id);
+  // View and range live in the URL (?vista=graficas&h=48), so a reload or a
+  // shared link keeps them.
+  const charts = params.get("vista") === "graficas";
+  const hours = RANGES.find(([h]) => String(h) === params.get("h"))?.[0] ?? 24;
+  const setParam = (key: string, value: string | null) => {
+    const next = new URLSearchParams(params);
+    if (value === null) next.delete(key);
+    else next.set(key, value);
+    router.replace(`/station/?${next}`, { scroll: false });
+  };
   const { data, error, at } = useApi<StationDetail>(valid ? `/v1/stations/${id}` : null);
 
   const back = (
@@ -84,12 +97,88 @@ function Station() {
       {tanks.length === 0 ? (
         <p className="muted">Aún no hay lecturas de inventario.</p>
       ) : (
-        <div className="grid">
-          {tanks.map((t) => (
-            <TankCard key={t.tank} t={t} />
-          ))}
-        </div>
+        <>
+          <div className="toolbar">
+            <Segmented
+              label="Vista"
+              value={charts ? "graficas" : "tanques"}
+              options={[
+                ["tanques", "Tanques"],
+                ["graficas", "Gráficas"],
+              ]}
+              onChange={(v) => setParam("vista", v === "graficas" ? v : null)}
+            />
+            {charts && (
+              <Segmented
+                label="Período"
+                value={String(hours)}
+                options={RANGES.map(([h, text]) => [String(h), text])}
+                onChange={(v) => setParam("h", v === "24" ? null : v)}
+              />
+            )}
+          </div>
+          {charts ? (
+            <TankCharts id={id} tanks={tanks} hours={hours} />
+          ) : (
+            <div className="grid">
+              {tanks.map((t) => (
+                <TankCard key={t.tank} t={t} />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </>
+  );
+}
+
+const RANGES: [number, string][] = [
+  [24, "24 h"],
+  [48, "48 h"],
+  [168, "7 días"],
+];
+
+/** Height of every tank over the last `hours`, by agent time. */
+function TankCharts({ id, tanks, hours }: { id: string; tanks: Tank[]; hours: number }) {
+  const path = `/v1/stations/${id}/history?hours=${hours}`;
+  const { data, error } = useApi<History>(path, 60_000);
+  // useApi keeps the previous range until the new one loads: show it dimmed
+  // instead of a blank frame.
+  const stale = !data || Date.parse(data.to) - Date.parse(data.from) !== hours * 3600_000;
+  if (!data) {
+    return <p className="muted">{error ? `No se pudo cargar el historial (${error.message}). Reintentando…` : "Cargando historial…"}</p>;
+  }
+  return (
+    <>
+      {error && <p className="notice">No se pudo actualizar el historial ({error.message}).</p>}
+      <div className={`grid grid-wide${stale ? " stale" : ""}`} aria-busy={stale}>
+        {tanks.map((t) => (
+          <ChartCard key={t.tank} t={t} h={data.tanks.find((x) => x.tank === t.tank)} from={data.from} to={data.to} />
+        ))}
+      </div>
+      <p className="muted small">Hora de recepción del agente (hora local), no la de la consola.</p>
+    </>
+  );
+}
+
+function Segmented({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: [string, string][];
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="segmented" role="group" aria-label={label}>
+      {options.map(([v, text]) => (
+        <button key={v} type="button" aria-pressed={v === value} onClick={() => onChange(v)}>
+          {text}
+        </button>
+      ))}
+    </div>
   );
 }

@@ -42,6 +42,19 @@ export function localTime(iso: string | null): string {
   return new Date(iso).toLocaleString(LOCALE, { dateStyle: "short", timeStyle: "short" });
 }
 
+/** "mar 20, 14:35": a chart point (local time). */
+export function pointTime(ms: number): string {
+  return new Date(ms).toLocaleString(LOCALE, { weekday: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+}
+
+/** Chart axis tick: "mar 20" at midnight, "14:00" otherwise (local time). */
+export function tickLabel(ms: number): string {
+  const d = new Date(ms);
+  return d.getHours() === 0 && d.getMinutes() === 0
+    ? d.toLocaleDateString(LOCALE, { weekday: "short", day: "numeric" })
+    : d.toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+}
+
 /** Console times are shown as the console reported them (no zone, may be skewed). */
 export function consoleTime(s: string | null): string {
   return s ? s.slice(0, 16).replace("T", " ") : "—";
