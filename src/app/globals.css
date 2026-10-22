@@ -1,0 +1,335 @@
+:root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface: #fcfcfb;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #6f6d68;
+  --hairline: #e1e0d9;
+  --border: rgba(11, 11, 11, 0.1);
+  --accent: #2a78d6;
+  --accent-ink: #1c5cab;
+  --meter-track: #cde2fb;
+  --meter-fill: #2a78d6;
+  --good: #0ca30c;
+  --good-ink: #006300;
+  --critical: #d03b3b;
+  --critical-ink: #b02a2a;
+  --notice-bg: #fff6e0;
+  --notice-border: #fab219;
+  --font: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --ink: #f0efec;
+    --ink-2: #c3c2b7;
+    --muted: #9a988f;
+    --hairline: #2c2c2a;
+    --border: rgba(255, 255, 255, 0.1);
+    --accent: #3987e5;
+    --accent-ink: #86b6ef;
+    --meter-track: #184f95;
+    --meter-fill: #5598e7;
+    --good-ink: #0ca30c;
+    --critical-ink: #e66767;
+    --notice-bg: #2a2310;
+    --notice-border: #c98500;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--font);
+  line-height: 1.45;
+}
+
+a {
+  color: var(--accent-ink);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+h1 {
+  font-size: 1.6rem;
+  margin: 0.2rem 0 0.6rem;
+}
+h2 {
+  font-size: 1.15rem;
+  margin: 1.8rem 0 0.7rem;
+}
+h3 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.muted {
+  color: var(--muted);
+}
+.small {
+  font-size: 0.85rem;
+}
+.center {
+  text-align: center;
+  margin-top: 4rem;
+}
+
+/* ------------------------------------------------ layout */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.7rem 1.25rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--hairline);
+}
+.brand {
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--ink);
+}
+.topbar-user {
+  display: flex;
+  gap: 0.9rem;
+  align-items: center;
+  font-size: 0.9rem;
+  min-width: 0;
+}
+.topbar-user .muted {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.25rem;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.1rem;
+}
+
+.notice {
+  background: var(--notice-bg);
+  border-left: 4px solid var(--notice-border);
+  padding: 0.6rem 0.9rem;
+  border-radius: 6px;
+}
+
+/* ------------------------------------------------ status */
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.5rem 0;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  padding: 0.12rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.badge-good span {
+  color: var(--good);
+}
+.badge-critical {
+  color: var(--critical-ink);
+  border-color: color-mix(in srgb, var(--critical) 45%, transparent);
+}
+.badge-critical span {
+  color: var(--critical);
+}
+
+/* ------------------------------------------------ station list */
+.station-card {
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  transition: border-color 0.15s;
+}
+.station-card:hover {
+  text-decoration: none;
+  border-color: var(--accent);
+}
+.station-card h2 {
+  margin: 0;
+}
+.stats {
+  display: flex;
+  gap: 2rem;
+  margin: 0.3rem 0;
+}
+.stats > div {
+  display: flex;
+  flex-direction: column;
+}
+.stat-value {
+  font-size: 1.6rem;
+  font-weight: 600;
+}
+
+/* ------------------------------------------------ tanks */
+.tank-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.tank-volume {
+  font-size: 1.9rem;
+  font-weight: 600;
+  margin: 0.4rem 0 0.5rem;
+}
+.meter {
+  height: 12px;
+  border-radius: 6px;
+  background: var(--meter-track);
+  overflow: hidden;
+}
+.meter-fill {
+  height: 100%;
+  background: var(--meter-fill);
+  border-radius: 6px;
+}
+.facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.2rem 1rem;
+  margin: 0.8rem 0;
+  font-size: 0.92rem;
+}
+.facts dt {
+  color: var(--ink-2);
+}
+.facts dd {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.tank footer {
+  border-top: 1px solid var(--hairline);
+  padding-top: 0.5rem;
+}
+
+/* ------------------------------------------------ alarms */
+.table-wrap {
+  overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+.table th,
+.table td {
+  text-align: left;
+  padding: 0.55rem 0.8rem;
+  border-bottom: 1px solid var(--hairline);
+}
+.table th {
+  color: var(--ink-2);
+  font-weight: 500;
+}
+.table tr:last-child td {
+  border-bottom: none;
+}
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------ login */
+.login {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding: 1.6rem;
+}
+.login-card h1 {
+  margin: 0;
+}
+.login-card p {
+  margin: 0;
+}
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+  color: var(--ink-2);
+}
+input {
+  font: inherit;
+  padding: 0.55rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid var(--hairline);
+  background: var(--page);
+  color: var(--ink);
+}
+input:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+button {
+  font: inherit;
+  font-weight: 600;
+  padding: 0.6rem;
+  border-radius: 6px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.link-button {
+  background: none;
+  color: var(--accent-ink);
+  padding: 0;
+  font-weight: 500;
+}
+.error {
+  color: var(--critical-ink);
+}
