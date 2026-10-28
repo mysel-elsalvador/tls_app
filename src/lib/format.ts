@@ -116,6 +116,9 @@ const TANK_ALARM: Record<string, string> = {
   "03": "Nivel alto de agua",
   "04": "Sobrellenado",
   "05": "Nivel bajo de producto",
+  // Console alarm documentation (2026-10-28): "High Product Alarm — product
+  // level in tank rose above programmed limit".
+  "07": "Nivel alto de producto",
   "08": "Altura de combustible inválida",
   "09": "Sonda desconectada",
   "11": "Entrega necesaria",
