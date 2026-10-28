@@ -10,6 +10,7 @@ import type {
   CloseSummary,
   CloseTotal,
   Sale,
+  Totalizer,
 } from "@/lib/types";
 
 /**
@@ -19,14 +20,14 @@ import type {
 export function VoxPanel({ id }: { id: string }) {
   return (
     <>
-      <h2>Ventas recientes</h2>
-      <SaleTable id={id} />
       <h2>Cierres de turno</h2>
       <CloseList id={id} />
       <p className="muted small">
         Horas del controlador VOX tal como las reporta (sin zona; su reloj puede
         no estar en hora).
       </p>
+      <h2>Ventas recientes</h2>
+      <SaleTable id={id} />
     </>
   );
 }
@@ -38,7 +39,11 @@ function SaleTable({ id }: { id: string }) {
     return <p className="muted">Aún no hay ventas registradas.</p>;
   return (
     <>
-      {error && <p className="notice">No se pudieron actualizar las ventas ({error.message}).</p>}
+      {error && (
+        <p className="notice">
+          No se pudieron actualizar las ventas ({error.message}).
+        </p>
+      )}
       <div className="table-wrap">
         <table className="table">
           <thead>
@@ -59,7 +64,10 @@ function SaleTable({ id }: { id: string }) {
                 <td className="num nowrap">{voxTime(s.sale_time)}</td>
                 <td>{s.pump}</td>
                 <td>{s.hose ?? s.hose_letter ?? "—"}</td>
-                <td>{s.product_name ?? (s.product_code ? `Producto ${s.product_code}` : "—")}</td>
+                <td>
+                  {s.product_name ??
+                    (s.product_code ? `Producto ${s.product_code}` : "—")}
+                </td>
                 <td className="num right">{num(s.volume, 3)}</td>
                 <td className="num right">{num(s.amount, 2)}</td>
                 <td className="num right">{num(s.ppu, 3)}</td>
@@ -81,7 +89,10 @@ function SaleTable({ id }: { id: string }) {
 function CloseList({ id }: { id: string }) {
   const router = useRouter();
   const first = useApi<ClosePage>(`/v1/stations/${id}/closes`);
-  const [older, setOlder] = useState<{ rows: CloseSummary[]; next: string | null } | null>(null);
+  const [older, setOlder] = useState<{
+    rows: CloseSummary[];
+    next: string | null;
+  } | null>(null);
   const [loading, setLoading] = useState(false);
   const [moreError, setMoreError] = useState<ApiFailure | null>(null);
 
@@ -100,7 +111,10 @@ function CloseList({ id }: { id: string }) {
       const more = await apiGet<ClosePage>(
         `/v1/stations/${id}/closes?before=${encodeURIComponent(next)}`,
       );
-      setOlder((o) => ({ rows: [...(o?.rows ?? page.closes), ...more.closes], next: more.next }));
+      setOlder((o) => ({
+        rows: [...(o?.rows ?? page.closes), ...more.closes],
+        next: more.next,
+      }));
     } catch (e) {
       const err = e instanceof ApiFailure ? e : new ApiFailure(0, "network");
       if (err.code === "signed_out") router.replace("/login/");
@@ -112,7 +126,11 @@ function CloseList({ id }: { id: string }) {
 
   return (
     <>
-      {first.error && <p className="notice">No se pudieron actualizar los cierres ({first.error.message}).</p>}
+      {first.error && (
+        <p className="notice">
+          No se pudieron actualizar los cierres ({first.error.message}).
+        </p>
+      )}
       <div className="table-wrap">
         <table className="table">
           <thead>
@@ -131,10 +149,19 @@ function CloseList({ id }: { id: string }) {
           </tbody>
         </table>
       </div>
-      {moreError && <p className="notice">No se pudieron cargar más cierres ({moreError.message}).</p>}
+      {moreError && (
+        <p className="notice">
+          No se pudieron cargar más cierres ({moreError.message}).
+        </p>
+      )}
       {next && (
         <p>
-          <button type="button" className="link-button" onClick={loadMore} disabled={loading}>
+          <button
+            type="button"
+            className="link-button"
+            onClick={loadMore}
+            disabled={loading}
+          >
             {loading ? "Cargando…" : "Cargar más"}
           </button>
         </p>
@@ -148,7 +175,9 @@ function merge(a: CloseSummary[], b: CloseSummary[]): CloseSummary[] {
   const byId = new Map([...a, ...b].map((c) => [c.id, c]));
   return [...byId.values()].sort((x, y) =>
     x.closed_at !== y.closed_at
-      ? x.closed_at < y.closed_at ? 1 : -1
+      ? x.closed_at < y.closed_at
+        ? 1
+        : -1
       : Number(y.id) - Number(x.id),
   );
 }
@@ -185,8 +214,17 @@ function CloseRow({ stationId, c }: { stationId: string; c: CloseSummary }) {
 }
 
 /** A close does not change once closed: loaded once when opened (hourly refresh). */
-function CloseDetailView({ stationId, closeId }: { stationId: string; closeId: string }) {
-  const { data, error } = useApi<CloseDetail>(`/v1/stations/${stationId}/closes/${closeId}`, 3600_000);
+function CloseDetailView({
+  stationId,
+  closeId,
+}: {
+  stationId: string;
+  closeId: string;
+}) {
+  const { data, error } = useApi<CloseDetail>(
+    `/v1/stations/${stationId}/closes/${closeId}`,
+    3600_000,
+  );
   if (!data) return <Loading error={error} what="el detalle" />;
   return (
     <div className="close-detail-grid">
@@ -199,14 +237,10 @@ function CloseDetailView({ stationId, closeId }: { stationId: string; closeId: s
         />
       </section>
       <section>
-        <h3>Ventas por surtidor</h3>
-        <TotalsTable
-          rows={data.by_pump}
-          first={["Surtidor", (t) => (t.pump == null ? "—" : `${t.pump}${t.hose ?? ""}`)]}
-          product
-        />
+        <h3>Ventas y totalizadores electrónicos por surtidor (galones)</h3>
+        <PumpTable sales={data.by_pump} totalizers={data.totalizers} />
       </section>
-      <section>
+      {/* <section>
         <h3>Pruebas de surtidor</h3>
         {data.pump_tests.length === 0 ? (
           <p className="muted">Sin pruebas</p>
@@ -217,43 +251,94 @@ function CloseDetailView({ stationId, closeId }: { stationId: string; closeId: s
             product
           />
         )}
-      </section>
-      <section>
-        <h3>Totalizadores electrónicos (galones)</h3>
-        {data.totalizers.length === 0 ? (
-          <p className="muted">Sin totalizadores</p>
-        ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Surtidor</th>
-                <th>Manguera</th>
-                <th>Producto</th>
-                <th className="right">Inicial</th>
-                <th className="right">Final</th>
-                <th className="right">Diferencia</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.totalizers.map((t, i) => (
-                <tr key={i}>
-                  <td>{t.pump ?? "—"}</td>
-                  <td>{t.hose || "—"}</td>
-                  <td>{t.product || "—"}</td>
-                  <td className="num right">{num(t.start_volume, 2)}</td>
-                  <td className="num right">{num(t.end_volume, 2)}</td>
-                  <td className="num right">
-                    {t.start_volume === null || t.end_volume === null
-                      ? "—"
-                      : num(t.end_volume - t.start_volume, 2)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
+      </section> */}
     </div>
+  );
+}
+
+/** A pump (or hose) row: its sales in the period next to its volume totalizer. */
+interface PumpRow {
+  pump?: number | null;
+  hose?: string;
+  product?: string;
+  sale?: CloseTotal;
+  tot?: Totalizer;
+}
+
+/**
+ * Joins the close's sales per pump with its totalizers, which are per hose.
+ * A sale row matches the totalizer with the same pump and hose; a row without
+ * a hose letter (VOXes that report per pump) matches only when that pump has a
+ * single totalizer. The VOX lists only pumps that sold, so hoses without sales
+ * keep their totalizer with empty sales; unmatched sale rows go last.
+ */
+function joinPumps(sales: CloseTotal[], totalizers: Totalizer[]): PumpRow[] {
+  const used = new Set<CloseTotal>();
+  const rows: PumpRow[] = totalizers.map((t) => {
+    const hoses = totalizers.filter((o) => o.pump === t.pump).length;
+    const sale = sales.find(
+      (s) =>
+        !used.has(s) &&
+        s.pump === t.pump &&
+        (s.hose ? s.hose === t.hose : hoses === 1),
+    );
+    if (sale) used.add(sale);
+    return {
+      pump: t.pump,
+      hose: t.hose,
+      product: sale?.product || t.product,
+      sale,
+      tot: t,
+    };
+  });
+  for (const s of sales)
+    if (!used.has(s))
+      rows.push({ pump: s.pump, hose: s.hose, product: s.product, sale: s });
+  return rows;
+}
+
+function PumpTable({
+  sales,
+  totalizers,
+}: {
+  sales: CloseTotal[];
+  totalizers: Totalizer[];
+}) {
+  const rows = joinPumps(sales, totalizers);
+  if (rows.length === 0) return <p className="muted">Sin ventas</p>;
+  return (
+    <table className="table">
+      <thead>
+        <tr>
+          <th>Surtidor</th>
+          <th>Producto</th>
+          <th className="right">Galones</th>
+          <th className="right">Monto ($)</th>
+          <th className="right">Tot. Inicial</th>
+          <th className="right">Tot. Final</th>
+          <th className="right">Tot. Diferencia</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r, i) => {
+          const start = r.tot?.start_volume ?? null;
+          const end = r.tot?.end_volume ?? null;
+          return (
+            <tr key={i}>
+              <td>{r.pump == null ? "—" : `${r.pump}${r.hose ?? ""}`}</td>
+              <td>{r.product || "—"}</td>
+              <td className="num right">{num(r.sale?.volume, 2)}</td>
+              <td className="num right">{num(r.sale?.amount, 2)}</td>
+              <td className="num right">{num(start, 2)}</td>
+              <td className="num right">{num(end, 2)}</td>
+              <td className="num right">
+                {start === null || end === null ? "—" : num(end - start, 2)}
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
   );
 }
 
@@ -299,7 +384,9 @@ function TotalsTable({
 function Loading({ error, what }: { error?: ApiFailure; what: string }) {
   return (
     <p className="muted">
-      {error ? `No se pudo cargar ${what} (${error.message}). Reintentando…` : "Cargando…"}
+      {error
+        ? `No se pudo cargar ${what} (${error.message}). Reintentando…`
+        : "Cargando…"}
     </p>
   );
 }

@@ -512,8 +512,8 @@ h3 {
 }
 .close-detail-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
-  gap: 0.4rem 1.5rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.8rem;
 }
 .close-detail h3 {
   margin: 0.4rem 0;
