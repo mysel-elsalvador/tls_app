@@ -84,6 +84,8 @@ export function alarmLabel(a: Alarm): { text: string; documented: boolean } {
   // From the console's alarm documentation (2026-10-22): "Fuel Alarm — fuel
   // is present in the area being monitored by the sensor".
   if (a.category === "03" && a.type === "03") return { text: "Combustible detectado por sensor", documented: true };
+  // Console panel (2026-10-23): "SENSOR OUT ALARM".
+  if (a.category === "03" && a.type === "04") return { text: "Sensor fuera de servicio", documented: true };
   return { text: `Categoría ${a.category ?? "?"}, tipo ${a.type ?? "?"}`, documented: false };
 }
 

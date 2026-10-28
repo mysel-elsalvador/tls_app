@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Builds the static site with the settings of the hub-web-<env> stack
-# (../api) and uploads it to its S3 bucket behind CloudFront.
+# (../tls_aws_api) and uploads it to its S3 bucket behind CloudFront.
 #   scripts/deploy.sh [dev|prod]
 set -euo pipefail
 cd "$(dirname "$0")/.."

@@ -1,4 +1,4 @@
-// Copy of ../../../api/src/types.ts (the web API contract); keep both in sync.
+// Copy of ../../../tls_aws_api/src/types.ts (the web API contract); keep both in sync.
 //
 // Console times ("console_time", "alarm_time") have no zone and are sent
 // exactly as the console reported them. Everything ending in "_at" is UTC.
