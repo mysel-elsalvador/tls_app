@@ -16,6 +16,15 @@ export function withUnit(v: number | null, unit: string | undefined, digits = 0)
   return `${n} ${UNIT_LABEL[unit] ?? unit}`;
 }
 
+/**
+ * The product as the console names it (602 label, e.g. "DIESEL"), else its
+ * code: "Producto 2". product_label is missing from APIs deployed before it.
+ */
+export function productName(p: { product_label?: string | null; product_code: string | null }): string {
+  if (p.product_label) return p.product_label;
+  return p.product_code ? `Producto ${p.product_code}` : "Producto —";
+}
+
 /** Capacity = volume + ullage, both from the console; null if either is unknown. */
 export function fill(t: Tank): { capacity: number; ratio: number } | null {
   if (t.volume === null || t.ullage === null) return null;

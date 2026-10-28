@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { consoleTime, withUnit } from "@/lib/format";
+import { consoleTime, productName, withUnit } from "@/lib/format";
 import type { Delivery } from "@/lib/types";
 
 const SHOWN = 10;
@@ -63,7 +63,7 @@ export function DeliveryList({ deliveries }: { deliveries: Delivery[] }) {
                       return (
                         <tr key={i}>
                           <td>{d.tank}</td>
-                          <td>{d.product_code ?? "—"}</td>
+                          <td>{productName(d)}</td>
                           <td className="num">
                             {consoleTime(d.start_time).slice(11)}
                             {d.end_time

@@ -1,7 +1,7 @@
 "use client";
 
 import { type KeyboardEvent, type PointerEvent, type RefObject, useEffect, useMemo, useRef, useState } from "react";
-import { fill, pointTime, tickLabel, withUnit } from "@/lib/format";
+import { fill, pointTime, productName, tickLabel, withUnit } from "@/lib/format";
 import type { Tank, TankHistory } from "@/lib/types";
 
 // Plot geometry, in px. Width follows the card; height is fixed.
@@ -92,7 +92,7 @@ export function ChartCard({
       <header className="tank-head">
         <h3>Tanque {t.tank}</h3>
         <span className="muted">
-          {t.product_code ? `Producto ${t.product_code}` : "Producto —"}
+          {productName(t)}
         </span>
       </header>
       <p className="tank-volume">

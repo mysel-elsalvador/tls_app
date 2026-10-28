@@ -1,4 +1,4 @@
-import { ago, consoleTime, fill, withUnit } from "@/lib/format";
+import { ago, consoleTime, fill, productName, withUnit } from "@/lib/format";
 import type { Tank } from "@/lib/types";
 
 /**
@@ -29,7 +29,7 @@ export function TankCard({ t }: { t: Tank }) {
       <header className="tank-head">
         <h3>Tanque {t.tank}</h3>
         <span className="muted">
-          {t.product_code ? `Producto ${t.product_code}` : "Producto —"}
+          {productName(t)}
         </span>
       </header>
 
