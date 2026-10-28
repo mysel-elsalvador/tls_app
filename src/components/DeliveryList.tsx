@@ -57,7 +57,21 @@ export function DeliveryList({ deliveries }: { deliveries: Delivery[] }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {g.map((d, i) => {
+                    {withProductTotals(g).map((row, i) => {
+                      if ("total" in row)
+                        return (
+                          <tr key={i} className="delivery-total">
+                            <td colSpan={5}>TOTAL {row.product}</td>
+                            <td className="num right">
+                              <strong>
+                                {row.total === null
+                                  ? "—"
+                                  : `+${withUnit(row.total, unit)}`}
+                              </strong>
+                            </td>
+                          </tr>
+                        );
+                      const d = row;
                       const u = d.units ?? {};
                       const inc = increase(d);
                       return (
@@ -131,6 +145,40 @@ function increase(d: Delivery): number | null {
 function sum(vs: (number | null)[]): number | null {
   const known = vs.filter((v): v is number => v !== null);
   return known.length ? known.reduce((a, b) => a + b, 0) : null;
+}
+
+/**
+ * The product a tank holds, ignoring the tank number in its label:
+ * "POWER PLUS 1" and "power plus 2" are both "POWER PLUS". Without a label,
+ * tanks with the same product code are the same product. Null = unknown.
+ */
+function productFamily(d: Delivery): string | null {
+  const label = d.product_label?.trim().replace(/\s+\d+$/, "").replace(/\s+/g, " ");
+  if (label) return label.toUpperCase();
+  return d.product_code ? `Producto ${d.product_code}` : null;
+}
+
+type Row = Delivery | { product: string; total: number | null };
+
+/**
+ * The group's tanks plus, right after the last tank of each product that
+ * received in more than one tank, a row with that product's total increase.
+ */
+export function withProductTotals(g: Delivery[]): Row[] {
+  const byProduct = new Map<string, Delivery[]>();
+  for (const d of g) {
+    const p = productFamily(d);
+    if (p) byProduct.set(p, [...(byProduct.get(p) ?? []), d]);
+  }
+  const rows: Row[] = [];
+  for (const d of g) {
+    rows.push(d);
+    const p = productFamily(d);
+    const same = p ? byProduct.get(p)! : [];
+    if (p && same.length > 1 && same[same.length - 1] === d)
+      rows.push({ product: p, total: sum(same.map(increase)) });
+  }
+  return rows;
 }
 
 function latestEnd(g: Delivery[]): string | null {

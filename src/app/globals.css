@@ -387,6 +387,11 @@ h3 {
 .delivery td {
   white-space: nowrap;
 }
+/* Sum of one product's tanks, right after the last of them. */
+.delivery-total td {
+  font-weight: 600;
+  color: var(--ink-2);
+}
 .delivery[open] summary::before {
   content: "▾";
 }
