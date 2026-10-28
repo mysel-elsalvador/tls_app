@@ -202,7 +202,7 @@ function CloseDetailView({ stationId, closeId }: { stationId: string; closeId: s
         <h3>Ventas por surtidor</h3>
         <TotalsTable
           rows={data.by_pump}
-          first={["Surtidor", (t) => t.pump ?? "—"]}
+          first={["Surtidor", (t) => (t.pump == null ? "—" : `${t.pump}${t.hose ?? ""}`)]}
           product
         />
       </section>
@@ -213,7 +213,7 @@ function CloseDetailView({ stationId, closeId }: { stationId: string; closeId: s
         ) : (
           <TotalsTable
             rows={data.pump_tests}
-            first={["Surtidor", (t) => t.pump ?? t.name ?? "—"]}
+            first={["Surtidor", (t) => (t.pump == null ? (t.name ?? "—") : `${t.pump}${t.hose ?? ""}`)]}
             product
           />
         )}
