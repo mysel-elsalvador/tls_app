@@ -1,4 +1,5 @@
-import { ago, consoleTime, fill, productName, withUnit } from "@/lib/format";
+import type { CSSProperties } from "react";
+import { ago, consoleTime, fill, productColor, productName, withUnit } from "@/lib/format";
 import type { Tank } from "@/lib/types";
 
 /**
@@ -18,6 +19,15 @@ function levelForArea(ratio: number): number {
     else hi = h;
   }
   return (lo + hi) / 2;
+}
+
+/** Product color for the fill; the track is a pale tint of it (works in dark mode too). */
+function meterColors(color: string | null): CSSProperties | undefined {
+  if (!color) return undefined;
+  return {
+    "--meter-fill": color,
+    "--meter-track": `color-mix(in srgb, ${color} 25%, var(--surface))`,
+  } as CSSProperties;
 }
 
 export function TankCard({ t }: { t: Tank }) {
@@ -43,6 +53,7 @@ export function TankCard({ t }: { t: Tank }) {
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={pct}
+            style={meterColors(productColor(t.product_label))}
           >
             <div className="meter-fill" style={{ height: `${levelForArea(f.ratio) * 100}%` }} />
             <span className="meter-label" aria-hidden="true">

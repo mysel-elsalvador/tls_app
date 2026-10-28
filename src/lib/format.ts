@@ -4,13 +4,20 @@ const LOCALE = "es-SV";
 
 export function num(v: number | null | undefined, digits = 0): string {
   if (v === null || v === undefined) return "—";
-  return v.toLocaleString(LOCALE, { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  return v.toLocaleString(LOCALE, {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  });
 }
 
 const UNIT_LABEL: Record<string, string> = { F: "°F", C: "°C" };
 
 /** "4.998 gal". Without a known unit, the number alone (never a guessed unit). */
-export function withUnit(v: number | null, unit: string | undefined, digits = 0): string {
+export function withUnit(
+  v: number | null,
+  unit: string | undefined,
+  digits = 0,
+): string {
   const n = num(v, digits);
   if (n === "—" || !unit) return n;
   return `${n} ${UNIT_LABEL[unit] ?? unit}`;
@@ -20,9 +27,30 @@ export function withUnit(v: number | null, unit: string | undefined, digits = 0)
  * The product as the console names it (602 label, e.g. "DIESEL"), else its
  * code: "Producto 2". product_label is missing from APIs deployed before it.
  */
-export function productName(p: { product_label?: string | null; product_code: string | null }): string {
+export function productName(p: {
+  product_label?: string | null;
+  product_code: string | null;
+}): string {
   if (p.product_label) return p.product_label;
   return p.product_code ? `Producto ${p.product_code}` : "Producto —";
+}
+
+/**
+ * Gauge color by fuel, matched as a word anywhere in the 602 label, any case
+ * and with or without a trailing number ("POWER PLUS 1" = power plus).
+ * "PREMIUN" is how the real console spells it. Null = keep the default blue.
+ */
+const PRODUCT_COLORS: [RegExp, string][] = [
+  [/\bregular\b/i, "#d13e33"],
+  [/\bsuper\b/i, "#f2ec51"],
+  [/\bdiesel\b/i, "#4b8e4f"],
+  [/\bpower\s*plus\b/i, "#83939f"],
+  [/\bpremiu[mn]\b/i, "#d1bc82"],
+];
+
+export function productColor(label: string | null | undefined): string | null {
+  if (!label) return null;
+  return PRODUCT_COLORS.find(([re]) => re.test(label))?.[1] ?? null;
 }
 
 /** Capacity = volume + ullage, both from the console; null if either is unknown. */
@@ -48,12 +76,21 @@ export function ago(iso: string | null, now = Date.now()): string {
 /** Local date and time of a UTC ISO time. */
 export function localTime(iso: string | null): string {
   if (!iso) return "—";
-  return new Date(iso).toLocaleString(LOCALE, { dateStyle: "short", timeStyle: "short" });
+  return new Date(iso).toLocaleString(LOCALE, {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
 }
 
 /** "mar 20, 14:35": a chart point (local time). */
 export function pointTime(ms: number): string {
-  return new Date(ms).toLocaleString(LOCALE, { weekday: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  return new Date(ms).toLocaleString(LOCALE, {
+    weekday: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  });
 }
 
 /** Chart axis tick: "mar 20" at midnight, "14:00" otherwise (local time). */
@@ -61,7 +98,11 @@ export function tickLabel(ms: number): string {
   const d = new Date(ms);
   return d.getHours() === 0 && d.getMinutes() === 0
     ? d.toLocaleDateString(LOCALE, { weekday: "short", day: "numeric" })
-    : d.toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+    : d.toLocaleTimeString(LOCALE, {
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+      });
 }
 
 /** Console times are shown as the console reported them (no zone, may be skewed). */
@@ -89,13 +130,19 @@ export function alarmLabel(a: Alarm): { text: string; documented: boolean } {
   if (a.category === "02" && a.type && TANK_ALARM[a.type]) {
     return { text: TANK_ALARM[a.type]!, documented: true };
   }
-  if (a.category === "14" && a.type === "02") return { text: "Fallo de autodial", documented: true };
+  if (a.category === "14" && a.type === "02")
+    return { text: "Fallo de autodial", documented: true };
   // From the console's alarm documentation (2026-10-22): "Fuel Alarm — fuel
   // is present in the area being monitored by the sensor".
-  if (a.category === "03" && a.type === "03") return { text: "Combustible detectado por sensor", documented: true };
+  if (a.category === "03" && a.type === "03")
+    return { text: "Combustible detectado por sensor", documented: true };
   // Console panel (2026-10-23): "SENSOR OUT ALARM".
-  if (a.category === "03" && a.type === "04") return { text: "Sensor fuera de servicio", documented: true };
-  return { text: `Categoría ${a.category ?? "?"}, tipo ${a.type ?? "?"}`, documented: false };
+  if (a.category === "03" && a.type === "04")
+    return { text: "Sensor fuera de servicio", documented: true };
+  return {
+    text: `Categoría ${a.category ?? "?"}, tipo ${a.type ?? "?"}`,
+    documented: false,
+  };
 }
 
 export function alarmSubject(a: Alarm): string {
