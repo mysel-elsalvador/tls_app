@@ -1,4 +1,9 @@
-import type { AgentState, ConsoleState, StationSummary } from "@/lib/types";
+import type {
+  AgentState,
+  ConsoleState,
+  ControllerState,
+  StationSummary,
+} from "@/lib/types";
 import { ago } from "@/lib/format";
 
 type Tone = "good" | "critical" | "neutral";
@@ -34,10 +39,20 @@ const CONSOLE: Record<ConsoleState, [Tone, string]> = {
   unknown: ["neutral", "desconocida"],
 };
 
-/** Agent and console badges of a station (a station is one console). */
+const CONTROLLER: Record<ControllerState, [Tone, string]> = {
+  online: ["good", "en línea"],
+  offline: ["critical", "fuera de línea"],
+};
+
+/**
+ * Agent badge plus one badge per device of the station: its console and/or
+ * its VOX controller. has_console and controller are missing from APIs
+ * deployed before them: a console, no controller.
+ */
 export function StationStatus({ s }: { s: StationSummary }) {
   const [tone, label] = AGENT[s.agent.state];
   const [ct, cl] = CONSOLE[s.console.state];
+  const controller = s.controller ?? null;
   return (
     <div className="badges">
       <Badge
@@ -46,7 +61,7 @@ export function StationStatus({ s }: { s: StationSummary }) {
       >
         {label}
       </Badge>
-      {s.console.id === null ? (
+      {s.has_console === false ? null : s.console.id === null ? (
         <Badge tone="neutral" title="La estación no tiene consola asignada">
           Consola sin asignar
         </Badge>
@@ -60,6 +75,16 @@ export function StationStatus({ s }: { s: StationSummary }) {
           }
         >
           Consola {cl}
+        </Badge>
+      )}
+      {controller && (
+        <Badge
+          tone={CONTROLLER[controller.state][0]}
+          title={
+            s.agent.state !== "online" ? "El agente no está en línea" : undefined
+          }
+        >
+          Controlador {CONTROLLER[controller.state][1]}
         </Badge>
       )}
     </div>

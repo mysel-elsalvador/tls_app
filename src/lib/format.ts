@@ -110,6 +110,20 @@ export function consoleTime(s: string | null): string {
   return s ? s.slice(0, 16).replace("T", " ") : "—";
 }
 
+/**
+ * VOX times likewise, as the controller reported them (no zone; its clock is
+ * not reliable), to the second: sales can be seconds apart.
+ */
+export function voxTime(s: string | null): string {
+  return s ? s.slice(0, 19).replace("T", " ") : "—";
+}
+
+/** VOX sale type: only "01" (contado) is known; other codes are shown as sent. */
+export function saleType(code: string | null): string {
+  if (code === "01") return "Contado";
+  return code ? `Tipo ${code}` : "—";
+}
+
 // Documented in the TLS2 manual (Document/VR_INTERFACE_MANUAL_LLM.txt).
 // Anything else is shown as its raw codes, never guessed.
 const TANK_ALARM: Record<string, string> = {

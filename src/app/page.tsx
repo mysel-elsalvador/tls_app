@@ -59,20 +59,25 @@ function Dashboard() {
               </span>
             </header>
             <StationStatus s={s} />
-            <div className="stats">
-              <div>
-                <span className="stat-value">{s.tanks}</span>
-                <span className="muted small">tanques</span>
-              </div>
-              <div>
-                <span className="stat-value">{s.active_alarms}</span>
-                <span className="muted small">alarmas activas</span>
-              </div>
-            </div>
-            <footer className="muted small">
-              {s.active_alarms > 0 && <Badge tone="critical">Revisar alarmas</Badge>} Última lectura{" "}
-              {ago(s.last_reading_at)}
-            </footer>
+            {/* Tanks and alarms come from the console; a controller-only station has neither. */}
+            {s.has_console !== false && (
+              <>
+                <div className="stats">
+                  <div>
+                    <span className="stat-value">{s.tanks}</span>
+                    <span className="muted small">tanques</span>
+                  </div>
+                  <div>
+                    <span className="stat-value">{s.active_alarms}</span>
+                    <span className="muted small">alarmas activas</span>
+                  </div>
+                </div>
+                <footer className="muted small">
+                  {s.active_alarms > 0 && <Badge tone="critical">Revisar alarmas</Badge>} Última lectura{" "}
+                  {ago(s.last_reading_at)}
+                </footer>
+              </>
+            )}
           </Link>
         ))}
       </div>

@@ -5,8 +5,12 @@ Next.js (App Router, TypeScript) exported as a static site (`output: "export"`),
 | Route              | What                                                                                     |
 | ------------------ | ---------------------------------------------------------------------------------------- |
 | `/login/`          | email + password; on first sign-in, asks for a new password (users get a temporary one)    |
-| `/`                | stations (one per console) of the user's active organizations: agent/console status, tanks, active alarms |
+| `/`                | stations (one per console) of the user's active organizations: agent/console/controller status, tanks, active alarms |
 | `/station/?id=N`   | one station: status, active alarms, and per tank the latest volume, fill, height, water and temperature |
+| `/station/?id=N&panel=vox` | the station's VOX controller: latest 50 sales, and shift closes (paged with "Cargar más"; a row opens sales by product and pump, pump tests and volume totalizers) |
+
+- **Tabs:** a station with a console and a VOX controller shows "Veeder-Root" (default) and "VOX"; with only one of them, just its view. Devices come from the API (`has_console`, `controller`). VOX data loads only on its tab.
+- **VOX times** are shown as the controller sent them (no zone conversion; its clock is not reliable). Totalizer amounts are not shown (scale not verified).
 
 - **Refresh:** data refreshes every 30 s while the tab is visible.
 - **Query-string station URL:** a static export cannot have dynamic routes for stations created after the build.

@@ -467,6 +467,63 @@ h3 {
   font-variant-numeric: tabular-nums;
 }
 
+.nowrap {
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------ station tabs, VOX */
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin: 1.2rem 0 0.4rem;
+  border-bottom: 1px solid var(--hairline);
+}
+.tabs button {
+  background: none;
+  color: var(--ink-2);
+  font-weight: 500;
+  padding: 0.55rem 0.9rem;
+  border-radius: 6px 6px 0 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.tabs button[aria-selected="true"] {
+  color: var(--ink);
+  font-weight: 600;
+  border-bottom-color: var(--accent);
+}
+/* Opens a close's detail: the "Desde" cell, so the whole time is the target. */
+.close-toggle {
+  background: none;
+  color: var(--accent-ink);
+  font-weight: 500;
+  padding: 0;
+  white-space: nowrap;
+}
+.close-toggle::before {
+  content: "▸ ";
+  color: var(--muted);
+}
+.close-toggle[aria-expanded="true"]::before {
+  content: "▾ ";
+}
+.table td.close-detail {
+  background: var(--page);
+}
+.close-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap: 0.4rem 1.5rem;
+}
+.close-detail h3 {
+  margin: 0.4rem 0;
+  font-size: 0.95rem;
+}
+.close-detail .table th,
+.close-detail .table td {
+  padding: 0.35rem 0.5rem;
+}
+
 /* ------------------------------------------------ login */
 .login {
   min-height: 100vh;

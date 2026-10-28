@@ -9,6 +9,7 @@ import { ChartCard } from "@/components/ChartCard";
 import { DeliveryList } from "@/components/DeliveryList";
 import { StationStatus } from "@/components/Status";
 import { TankCard } from "@/components/TankCard";
+import { VoxPanel } from "@/components/VoxPanel";
 import { useApi } from "@/lib/api";
 import { ago, localTime } from "@/lib/format";
 import type { History, StationDetail, Tank } from "@/lib/types";
@@ -30,8 +31,8 @@ function Station() {
   const router = useRouter();
   const id = params.get("id");
   const valid = id !== null && /^[1-9][0-9]*$/.test(id);
-  // View and range live in the URL (?vista=graficas&h=48), so a reload or a
-  // shared link keeps them.
+  // Tab, view and range live in the URL (?panel=vox, ?vista=graficas&h=48),
+  // so a reload or a shared link keeps them.
   const charts = params.get("vista") === "graficas";
   const hours = RANGES.find(([h]) => String(h) === params.get("h"))?.[0] ?? 24;
   const setParam = (key: string, value: string | null) => {
@@ -75,6 +76,13 @@ function Station() {
 
   // deliveries: absent from an API deployed before it was added.
   const { station: s, tanks, alarms, deliveries = [] } = data;
+  // One tab per device the station has (has_console and controller are
+  // absent from an API deployed before them: a console only). Veeder-Root
+  // is the default; a controller-only station shows VOX alone.
+  const tabs: [Tab, string][] = [];
+  if (s.has_console !== false) tabs.push(["vr", "Veeder-Root"]);
+  if (s.controller) tabs.push(["vox", "VOX"]);
+  const tab = tabs.find(([t]) => t === params.get("panel"))?.[0] ?? tabs[0]?.[0] ?? "vr";
   return (
     <>
       {back}
@@ -82,7 +90,9 @@ function Station() {
       <p className="muted">
         {s.org.name}
         {s.address ? ` · ${s.address}` : ""} · agente {s.agent.id}
-        {s.agent.version ? ` v${s.agent.version}` : ""} · consola {s.console.id ?? "sin asignar"}
+        {s.agent.version ? ` v${s.agent.version}` : ""}
+        {s.has_console !== false && ` · consola ${s.console.id ?? "sin asignar"}`}
+        {s.controller && ` · controlador ${s.controller.id}`}
       </p>
       <StationStatus s={s} />
       {s.agent.state !== "online" && (
@@ -92,50 +102,76 @@ function Station() {
       )}
       {error && <p className="notice">No se pudo actualizar ({error.message}). Mostrando datos de {ago(at?.toISOString() ?? null)}.</p>}
 
-      <h2>Alarmas activas ({alarms.length})</h2>
-      <AlarmTable alarms={alarms} />
-
-      <h2>Tanques</h2>
-      {tanks.length === 0 ? (
-        <p className="muted">Aún no hay lecturas de inventario.</p>
-      ) : (
-        <>
-          <div className="toolbar">
-            <Segmented
-              label="Vista"
-              value={charts ? "graficas" : "tanques"}
-              options={[
-                ["tanques", "Tanques"],
-                ["graficas", "Gráficas"],
-              ]}
-              onChange={(v) => setParam("vista", v === "graficas" ? v : null)}
-            />
-            {charts && (
-              <Segmented
-                label="Período"
-                value={String(hours)}
-                options={RANGES.map(([h, text]) => [String(h), text])}
-                onChange={(v) => setParam("h", v === "24" ? null : v)}
-              />
-            )}
-          </div>
-          {charts ? (
-            <TankCharts id={id} tanks={tanks} hours={hours} />
-          ) : (
-            <div className="grid">
-              {tanks.map((t) => (
-                <TankCard key={t.tank} t={t} />
-              ))}
-            </div>
-          )}
-        </>
+      {tabs.length > 1 && (
+        <div className="tabs" role="tablist" aria-label="Equipo">
+          {tabs.map(([t, text]) => (
+            <button
+              key={t}
+              type="button"
+              role="tab"
+              aria-selected={t === tab}
+              onClick={() => setParam("panel", t === "vr" ? null : t)}
+            >
+              {text}
+            </button>
+          ))}
+        </div>
       )}
 
-      <h2>Entregas recientes</h2>
-      <DeliveryList deliveries={deliveries} />
+      {/* Mounted only while shown: VOX data loads only on its tab. */}
+      {tab === "vox" ? (
+        <VoxPanel key={id} id={id} />
+      ) : (
+        <>
+          <h2>Alarmas activas ({alarms.length})</h2>
+          <AlarmTable alarms={alarms} />
+
+          <h2>Tanques</h2>
+          {tanks.length === 0 ? (
+            <p className="muted">Aún no hay lecturas de inventario.</p>
+          ) : (
+            <>
+              <div className="toolbar">
+                <Segmented
+                  label="Vista"
+                  value={charts ? "graficas" : "tanques"}
+                  options={[
+                    ["tanques", "Tanques"],
+                    ["graficas", "Gráficas"],
+                  ]}
+                  onChange={(v) => setParam("vista", v === "graficas" ? v : null)}
+                />
+                {charts && (
+                  <Segmented
+                    label="Período"
+                    value={String(hours)}
+                    options={RANGES.map(([h, text]) => [String(h), text])}
+                    onChange={(v) => setParam("h", v === "24" ? null : v)}
+                  />
+                )}
+              </div>
+              {charts ? (
+                <TankCharts id={id} tanks={tanks} hours={hours} />
+              ) : (
+                <div className="grid">
+                  {tanks.map((t) => (
+                    <TankCard key={t.tank} t={t} />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          <h2>Entregas recientes</h2>
+          <DeliveryList deliveries={deliveries} />
+        </>
+      )}
     </>
   );
 }
+
+/** Station tabs: Veeder-Root console or VOX controller (?panel=vox). */
+type Tab = "vr" | "vox";
 
 const RANGES: [number, string][] = [
   [24, "24 h"],
