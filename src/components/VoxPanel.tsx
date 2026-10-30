@@ -1,7 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { CloseChart } from "@/components/CloseChart";
+import { Segmented } from "@/components/Segmented";
 import { ApiFailure, apiGet, useApi } from "@/lib/api";
 import { num, saleType, voxTime } from "@/lib/format";
 import type {
@@ -9,6 +11,7 @@ import type {
   ClosePage,
   CloseSummary,
   CloseTotal,
+  CloseType,
   Sale,
   Totalizer,
 } from "@/lib/types";
@@ -18,10 +21,42 @@ import type {
  * gallons (the only unit seen at the stations so far, labeled so by the VOX).
  */
 export function VoxPanel({ id }: { id: string }) {
+  // Close type and view live in the URL (?cierre=dia, ?cierres=graficas).
+  const params = useSearchParams();
+  const router = useRouter();
+  const type: CloseType = params.get("cierre") === "dia" ? "D" : "T";
+  const charts = params.get("cierres") === "graficas";
+  const setParam = (key: string, value: string | null) => {
+    const next = new URLSearchParams(params);
+    if (value === null) next.delete(key);
+    else next.set(key, value);
+    router.replace(`/station/?${next}`, { scroll: false });
+  };
   return (
     <>
-      <h2>Cierres de turno</h2>
-      <CloseList id={id} />
+      <h2>Cierres</h2>
+      <div className="toolbar">
+        <Segmented
+          label="Tipo de cierre"
+          value={type}
+          options={[
+            ["T", "Turnos"],
+            ["D", "Días"],
+          ]}
+          onChange={(v) => setParam("cierre", v === "D" ? "dia" : null)}
+        />
+        <Segmented
+          label="Vista de cierres"
+          value={charts ? "graficas" : "lista"}
+          options={[
+            ["lista", "Lista"],
+            ["graficas", "Gráficas"],
+          ]}
+          onChange={(v) => setParam("cierres", v === "graficas" ? v : null)}
+        />
+      </div>
+      {/* Keyed by type: the pages loaded with "Cargar más" belong to one type. */}
+      <CloseList key={type} id={id} type={type} charts={charts} />
       <p className="muted small">
         Horas del controlador VOX tal como las reporta (sin zona; su reloj puede
         no estar en hora).
@@ -82,13 +117,23 @@ function SaleTable({ id }: { id: string }) {
 }
 
 /**
- * Shift closes, latest first. The first page refreshes; "Cargar más" adds
+ * Closes of one type (T shift, D day), latest first, as a table or as a
+ * chart of the same closes. The first page refreshes; "Cargar más" adds
  * older pages. Once it is used, the first page it followed is kept too, so a
  * close pushed off the refreshed first page is not lost between pages.
  */
-function CloseList({ id }: { id: string }) {
+function CloseList({
+  id,
+  type,
+  charts,
+}: {
+  id: string;
+  type: CloseType;
+  charts: boolean;
+}) {
   const router = useRouter();
-  const first = useApi<ClosePage>(`/v1/stations/${id}/closes`);
+  const path = `/v1/stations/${id}/closes?type=${type}`;
+  const first = useApi<ClosePage>(path);
   const [older, setOlder] = useState<{
     rows: CloseSummary[];
     next: string | null;
@@ -100,7 +145,11 @@ function CloseList({ id }: { id: string }) {
   const page = first.data;
   const rows = merge(page.closes, older?.rows ?? []);
   if (rows.length === 0)
-    return <p className="muted">Aún no hay cierres de turno.</p>;
+    return (
+      <p className="muted">
+        Aún no hay cierres de {type === "T" ? "turno" : "día"}.
+      </p>
+    );
   const next = older ? older.next : page.next;
 
   const loadMore = async () => {
@@ -109,7 +158,7 @@ function CloseList({ id }: { id: string }) {
     setMoreError(null);
     try {
       const more = await apiGet<ClosePage>(
-        `/v1/stations/${id}/closes?before=${encodeURIComponent(next)}`,
+        `${path}&before=${encodeURIComponent(next)}`,
       );
       setOlder((o) => ({
         rows: [...(o?.rows ?? page.closes), ...more.closes],
@@ -131,24 +180,28 @@ function CloseList({ id }: { id: string }) {
           No se pudieron actualizar los cierres ({first.error.message}).
         </p>
       )}
-      <div className="table-wrap">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Desde</th>
-              <th>Hasta</th>
-              <th className="right">Despachos</th>
-              <th className="right">Total ($)</th>
-              <th className="right">Galones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((c) => (
-              <CloseRow key={c.id} stationId={id} c={c} />
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {charts ? (
+        <CloseChart closes={rows} type={type} />
+      ) : (
+        <div className="table-wrap">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Desde</th>
+                <th>Hasta</th>
+                <th className="right">Despachos</th>
+                <th className="right">Total ($)</th>
+                <th className="right">Galones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((c) => (
+                <CloseRow key={c.id} stationId={id} c={c} />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
       {moreError && (
         <p className="notice">
           No se pudieron cargar más cierres ({moreError.message}).

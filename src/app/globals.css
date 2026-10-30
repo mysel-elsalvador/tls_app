@@ -352,6 +352,23 @@ h3 {
 .chart-tip strong {
   font-size: 1rem;
 }
+/* VOX close comparison */
+.chart-title {
+  margin: 0 0 0.4rem;
+  font-size: 0.95rem;
+}
+.chart-bar {
+  fill: var(--accent);
+  transition: fill-opacity 0.1s;
+}
+.chart-bar-dim {
+  fill-opacity: 0.4;
+}
+.chart-avg {
+  stroke: var(--muted);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
 
 /* ------------------------------------------------ deliveries */
 .deliveries {
@@ -544,6 +561,9 @@ h3 {
 }
 .login-card p {
   margin: 0;
+}
+.login-card .link-button {
+  align-self: center;
 }
 label {
   display: flex;

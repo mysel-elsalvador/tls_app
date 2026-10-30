@@ -7,6 +7,7 @@ import { AlarmTable } from "@/components/AlarmTable";
 import { AuthGate } from "@/components/AuthGate";
 import { ChartCard } from "@/components/ChartCard";
 import { DeliveryList } from "@/components/DeliveryList";
+import { Segmented } from "@/components/Segmented";
 import { StationStatus } from "@/components/Status";
 import { TankCard } from "@/components/TankCard";
 import { VoxPanel } from "@/components/VoxPanel";
@@ -31,8 +32,9 @@ function Station() {
   const router = useRouter();
   const id = params.get("id");
   const valid = id !== null && /^[1-9][0-9]*$/.test(id);
-  // Tab, view and range live in the URL (?panel=vox, ?vista=graficas&h=48),
-  // so a reload or a shared link keeps them.
+  // Tab, view and range live in the URL (?panel=vox, ?vista=graficas&h=48;
+  // VoxPanel adds ?cierre=dia&cierres=graficas), so a reload or a shared link
+  // keeps them.
   const charts = params.get("vista") === "graficas";
   const hours = RANGES.find(([h]) => String(h) === params.get("h"))?.[0] ?? 24;
   const setParam = (key: string, value: string | null) => {
@@ -199,27 +201,5 @@ function TankCharts({ id, tanks, hours }: { id: string; tanks: Tank[]; hours: nu
       </div>
       <p className="muted small">Hora de recepción del agente (hora local), no la de la consola.</p>
     </>
-  );
-}
-
-function Segmented({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  options: [string, string][];
-  onChange: (v: string) => void;
-}) {
-  return (
-    <div className="segmented" role="group" aria-label={label}>
-      {options.map(([v, text]) => (
-        <button key={v} type="button" aria-pressed={v === value} onClick={() => onChange(v)}>
-          {text}
-        </button>
-      ))}
-    </div>
   );
 }

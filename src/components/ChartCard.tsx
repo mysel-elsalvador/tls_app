@@ -177,7 +177,7 @@ export function ChartCard({
   );
 }
 
-function useWidth(ref: RefObject<HTMLDivElement | null>): number {
+export function useWidth(ref: RefObject<HTMLDivElement | null>): number {
   const [w, setW] = useState(400);
   useEffect(() => {
     const el = ref.current;
@@ -223,7 +223,7 @@ function nearest(points: Point[], ms: number): number {
  * 0 up to a round value at or above `max`, in 4-6 round steps
  * (10,170 -> 0, 2,500 … 12,500).
  */
-function niceTicks(max: number): number[] {
+export function niceTicks(max: number): number[] {
   if (max <= 0) return [0, 1];
   const raw = max / 5;
   const pow = 10 ** Math.floor(Math.log10(raw));

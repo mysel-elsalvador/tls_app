@@ -118,6 +118,16 @@ export function voxTime(s: string | null): string {
   return s ? s.slice(0, 19).replace("T", " ") : "—";
 }
 
+/**
+ * A VOX time as a short axis label, read from the string (never through Date:
+ * it has no zone). "29/10 06:00" with the time, "29/10" without.
+ */
+export function voxShort(s: string | null, time: boolean): string {
+  if (!s) return "—";
+  const date = `${s.slice(8, 10)}/${s.slice(5, 7)}`;
+  return time ? `${date} ${s.slice(11, 16)}` : date;
+}
+
 /** VOX sale type: only "01" (contado) is known; other codes are shown as sent. */
 export function saleType(code: string | null): string {
   if (code === "01") return "Contado";
@@ -156,6 +166,10 @@ export function alarmLabel(a: Alarm): { text: string; documented: boolean } {
   // Console panel (2026-10-23): "SENSOR OUT ALARM".
   if (a.category === "03" && a.type === "04")
     return { text: "Sensor fuera de servicio", documented: true };
+  // Console alarm documentation (2026-10-30): "Printer Error — the printing
+  // function cannot continue due to a problem with the printer".
+  if (a.category === "64" && a.type === "02")
+    return { text: "Error de impresora", documented: true };
   return {
     text: `Categoría ${a.category ?? "?"}, tipo ${a.type ?? "?"}`,
     documented: false,
