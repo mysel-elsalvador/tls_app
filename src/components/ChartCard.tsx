@@ -1,7 +1,20 @@
 "use client";
 
-import { type KeyboardEvent, type PointerEvent, type RefObject, useEffect, useMemo, useRef, useState } from "react";
-import { fill, pointTime, productName, tickLabel, withUnit } from "@/lib/format";
+import {
+  type CSSProperties,
+  type KeyboardEvent,
+  type PointerEvent,
+  type RefObject,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { fill, fuelColor, pointTime, productName, tickLabel, withUnit } from "@/lib/format";
+
+function series(color: string | null): CSSProperties | undefined {
+  return color ? ({ "--series": color } as CSSProperties) : undefined;
+}
 import type { Tank, TankHistory } from "@/lib/types";
 
 // Plot geometry, in px. Width follows the card; height is fixed.
@@ -88,7 +101,8 @@ export function ChartCard({
   };
 
   return (
-    <article className="card tank">
+    // The line takes the tank's fuel color (as the VOX charts); unknown: accent blue.
+    <article className="card tank" style={series(fuelColor(t.product_label))}>
       <header className="tank-head">
         <h3>Tanque {t.tank}</h3>
         <span className="muted">

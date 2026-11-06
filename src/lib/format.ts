@@ -76,7 +76,13 @@ const FUELS: [RegExp, Fuel][] = [
   [/\bpower\s*plus\b/i, { key: "power-plus", name: "Power Plus", color: "#4a76b5", rank: 2 }],
   [/\bpremiu[mn]\b/i, { key: "premium", name: "Premium", color: "#b8893a", rank: 3 }],
 ];
-const OTHER_COLORS = ["#8a63c9", "#2a9d9a", "#c4572a"];
+/** Chart color of a known fuel in a tank label or product name; null = default accent. */
+export function fuelColor(label: string | null | undefined): string | null {
+  if (!label) return null;
+  return FUELS.find(([re]) => re.test(label))?.[1].color ?? null;
+}
+
+const OTHER_COLORS =["#8a63c9", "#2a9d9a", "#c4572a"];
 
 /** The fuel of a VOX product name; unknown names keep their own, without the number. */
 export function fuelOf(product: string | null): Fuel {
