@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { CloseChart } from "@/components/CloseChart";
+import { PumpGrid } from "@/components/PumpGrid";
 import { Segmented } from "@/components/Segmented";
 import { ApiFailure, apiGet, useApi } from "@/lib/api";
 import { num, saleType, voxTime } from "@/lib/format";
@@ -16,16 +17,19 @@ import type {
   Totalizer,
 } from "@/lib/types";
 
+type View = "lista" | "graficas" | "surtidores";
+
 /**
  * The station's VOX controller: latest sales and shift closes. Volumes are
  * gallons (the only unit seen at the stations so far, labeled so by the VOX).
  */
 export function VoxPanel({ id }: { id: string }) {
-  // Close type and view live in the URL (?cierre=dia, ?cierres=graficas).
+  // Close type and view live in the URL (?cierre=dia, ?cierres=graficas|surtidores).
   const params = useSearchParams();
   const router = useRouter();
   const type: CloseType = params.get("cierre") === "dia" ? "D" : "T";
-  const charts = params.get("cierres") === "graficas";
+  const cierres = params.get("cierres");
+  const view: View = cierres === "graficas" || cierres === "surtidores" ? cierres : "lista";
   const setParam = (key: string, value: string | null) => {
     const next = new URLSearchParams(params);
     if (value === null) next.delete(key);
@@ -47,16 +51,17 @@ export function VoxPanel({ id }: { id: string }) {
         />
         <Segmented
           label="Vista de cierres"
-          value={charts ? "graficas" : "lista"}
+          value={view}
           options={[
             ["lista", "Lista"],
             ["graficas", "Gráficas"],
+            ["surtidores", "Surtidores"],
           ]}
-          onChange={(v) => setParam("cierres", v === "graficas" ? v : null)}
+          onChange={(v) => setParam("cierres", v === "lista" ? null : v)}
         />
       </div>
       {/* Keyed by type: the pages loaded with "Cargar más" belong to one type. */}
-      <CloseList key={type} id={id} type={type} charts={charts} />
+      <CloseList key={type} id={id} type={type} view={view} />
       <p className="muted small">
         Horas del controlador VOX tal como las reporta (sin zona; su reloj puede
         no estar en hora).
@@ -125,11 +130,11 @@ function SaleTable({ id }: { id: string }) {
 function CloseList({
   id,
   type,
-  charts,
+  view,
 }: {
   id: string;
   type: CloseType;
-  charts: boolean;
+  view: View;
 }) {
   const router = useRouter();
   const path = `/v1/stations/${id}/closes?type=${type}`;
@@ -180,8 +185,10 @@ function CloseList({
           No se pudieron actualizar los cierres ({first.error.message}).
         </p>
       )}
-      {charts ? (
+      {view === "graficas" ? (
         <CloseChart closes={rows} type={type} />
+      ) : view === "surtidores" ? (
+        <PumpGrid closes={rows} type={type} />
       ) : (
         <div className="table-wrap">
           <table className="table">

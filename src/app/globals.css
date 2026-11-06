@@ -392,6 +392,103 @@ h3 {
   border-radius: 2px;
   flex: none;
 }
+
+/* VOX pump wear grid: 6 per row (3 on phones), color = use vs the average pump. */
+.field-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.field-inline select {
+  font: inherit;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  max-width: 100%;
+}
+.pump-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.5rem;
+  max-width: 600px;
+  margin: 0.4rem auto 0.8rem;
+}
+@media (max-width: 520px) {
+  .pump-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.pump-normal {
+  --wear: var(--good);
+}
+.pump-high {
+  --wear: #e8890c;
+}
+.pump-very-high {
+  --wear: var(--critical);
+}
+.pump-idle,
+.pump-unknown {
+  --wear: var(--muted);
+}
+.pump {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+  padding: 0.25rem;
+  border: 2px solid var(--wear);
+  border-radius: 8px;
+  /* Text stays ink: the tint and border carry the level, the label names it. */
+  background: color-mix(in srgb, var(--wear) 24%, var(--surface));
+  color: var(--ink);
+  font-weight: 500;
+}
+.pump-idle,
+.pump-unknown {
+  border-style: dashed;
+  background: transparent;
+}
+.pump[aria-pressed="true"] {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+.pump-num {
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.pump-share {
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+.pump-level {
+  font-size: 0.7rem;
+  color: var(--ink-2);
+}
+.pump-legend {
+  justify-content: center;
+}
+.pump-legend .swatch {
+  border: 2px solid var(--wear);
+  background: color-mix(in srgb, var(--wear) 24%, var(--surface));
+}
+.pump-legend .swatch.pump-idle {
+  border-style: dashed;
+  background: transparent;
+}
+.pump-detail {
+  border-top: 1px solid var(--hairline);
+  padding-top: 0.6rem;
+  margin-bottom: 0.6rem;
+}
+.pump-detail h4 {
+  margin: 0 0 0.2rem;
+}
 .chart-avg {
   stroke: var(--muted);
   stroke-width: 1;
