@@ -53,6 +53,43 @@ export function productColor(label: string | null | undefined): string | null {
   return PRODUCT_COLORS.find(([re]) => re.test(label))?.[1] ?? null;
 }
 
+/** A fuel in the close charts: products with a number add up ("POWER PLUS 1" + "2"). */
+export interface Fuel {
+  key: string;
+  name: string;
+  color: string;
+  rank: number; // stacking order, bottom first
+}
+
+/**
+ * Chart colors: the tank hues, re-stepped so bars stay visible on light and
+ * dark surfaces (the gauge yellow and beige vanish on white, the gray reads as
+ * "no data"). Checked with the dataviz palette validator for the two product
+ * sets seen, stacked in rank order: Regular/Super/Diesel and Power Plus/
+ * Premium/Diesel. Super and Premium are too close to stack next to each other;
+ * no station sells both so far.
+ */
+const FUELS: [RegExp, Fuel][] = [
+  [/\bregular\b/i, { key: "regular", name: "Regular", color: "#d13e33", rank: 0 }],
+  [/\bsuper\b/i, { key: "super", name: "Super", color: "#ad8c00", rank: 1 }],
+  [/\bdiesel\b/i, { key: "diesel", name: "Diesel", color: "#2f7d4a", rank: 4 }],
+  [/\bpower\s*plus\b/i, { key: "power-plus", name: "Power Plus", color: "#4a76b5", rank: 2 }],
+  [/\bpremiu[mn]\b/i, { key: "premium", name: "Premium", color: "#b8893a", rank: 3 }],
+];
+const OTHER_COLORS = ["#8a63c9", "#2a9d9a", "#c4572a"];
+
+/** The fuel of a VOX product name; unknown names keep their own, without the number. */
+export function fuelOf(product: string | null): Fuel {
+  if (!product) return { key: "?", name: "Sin producto", color: "#8d8b84", rank: 99 };
+  const known = FUELS.find(([re]) => re.test(product));
+  if (known) return known[1];
+  const base = product.replace(/\s+\d+$/, "").trim().toLowerCase();
+  const name = base.replace(/(^|\s)\S/g, (s) => s.toUpperCase());
+  // Color follows the name, so it never changes with the other products shown.
+  const h = [...base].reduce((a, ch) => a + ch.charCodeAt(0), 0);
+  return { key: `x-${base}`, name, color: OTHER_COLORS[h % OTHER_COLORS.length]!, rank: 50 };
+}
+
 /** Capacity = volume + ullage, both from the console; null if either is unknown. */
 export function fill(t: Tank): { capacity: number; ratio: number } | null {
   if (t.volume === null || t.ullage === null) return null;

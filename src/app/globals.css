@@ -361,8 +361,35 @@ h3 {
   fill: var(--accent);
   transition: fill-opacity 0.1s;
 }
+/* A close without sales by product: its total, never split by guess. */
+.chart-bar-unsplit {
+  fill: var(--muted);
+  fill-opacity: 0.6;
+}
 .chart-bar-dim {
   fill-opacity: 0.4;
+}
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 1rem;
+  margin: 0 0 0.4rem;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+  color: var(--ink-2);
+}
+.chart-legend li,
+.chart-tip-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex: none;
 }
 .chart-avg {
   stroke: var(--muted);
