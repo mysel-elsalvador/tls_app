@@ -97,9 +97,29 @@ h3 {
   border-bottom: 1px solid var(--hairline);
 }
 .brand {
-  font-weight: 700;
-  font-size: 1.15rem;
-  color: var(--ink);
+  display: flex;
+  align-items: center;
+}
+/* The logo is drawn for a light background: in dark mode it sits on a light pill. */
+.brand img,
+.login-logo img {
+  display: block;
+  width: auto;
+  border-radius: 6px;
+}
+.brand img {
+  height: 1.6rem;
+}
+.login-logo img {
+  height: auto;
+  max-width: 100%;
+}
+@media (prefers-color-scheme: dark) {
+  .brand img,
+  .login-logo img {
+    background: #fcfcfb;
+    padding: 0.2rem 0.4rem;
+  }
 }
 .topbar-user {
   display: flex;

@@ -3,11 +3,11 @@ import { ServiceWorker } from "@/components/ServiceWorker";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "hub · Monitoreo de tanques",
-  description: "Inventario y alarmas de las consolas Veeder-Root de sus estaciones",
+  title: "StationsView · Monitoreo de estaciones",
+  description: "Tanques, alarmas, ventas y cierres de sus estaciones",
   // iOS home-screen app (Safari ignores most of the manifest).
-  appleWebApp: { capable: true, title: "hub", statusBarStyle: "default" },
-  icons: { apple: "/apple-touch-icon.png" },
+  appleWebApp: { capable: true, title: "StationsView", statusBarStyle: "default" },
+  icons: { apple: "/180x180.png" },
 };
 
 export const viewport: Viewport = {

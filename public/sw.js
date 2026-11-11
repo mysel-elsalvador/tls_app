@@ -9,10 +9,10 @@ self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim(
 self.addEventListener("push", (event) => {
   const data = event.data ? event.data.json() : {};
   event.waitUntil(
-    self.registration.showNotification(data.title || "hub", {
+    self.registration.showNotification(data.title || "StationsView", {
       body: data.body || "",
-      icon: "/icon-192.png",
-      badge: "/icon-192.png",
+      icon: "/192x192.png",
+      badge: "/192x192.png",
       data: { url: data.url || "/" },
     }),
   );

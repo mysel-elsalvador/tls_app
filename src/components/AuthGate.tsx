@@ -23,8 +23,9 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   return (
     <>
       <header className="topbar">
-        <Link href="/" className="brand">
-          hub
+        <Link href="/" className="brand" aria-label="StationsView, inicio">
+          {/* eslint-disable-next-line @next/next/no-img-element -- static export, no image optimizer */}
+          <img src="/logo-ssview.png" alt="StationsView" width={2000} height={300} />
         </Link>
         <span className="topbar-user">
           <span className="muted">{user}</span>

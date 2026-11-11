@@ -154,8 +154,11 @@ export default function Login() {
   return (
     <main className="login">
       <form className="card login-card" onSubmit={submit}>
-        <h1>hub</h1>
-        <p className="muted">Monitoreo de tanques</p>
+        <h1 className="login-logo">
+          {/* eslint-disable-next-line @next/next/no-img-element -- static export, no image optimizer */}
+          <img src="/logo-ssview.png" alt="StationsView" width={2000} height={300} />
+        </h1>
+        <p className="muted">Monitoreo de estaciones</p>
 
         {step === "credentials" && (
           <>
